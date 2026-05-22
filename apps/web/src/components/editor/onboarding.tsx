@@ -6,7 +6,13 @@ import ReactMarkdown from "react-markdown";
 import { SOCIAL_LINKS } from "@/site/social";
 import { useLocalStorage } from "@/services/storage/use-local-storage";
 import { Button } from "../ui/button";
-import { Dialog, DialogBody, DialogContent, DialogTitle } from "../ui/dialog";
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogDescription,
+	DialogTitle,
+} from "../ui/dialog";
 
 export function Onboarding() {
 	const [step, setStep] = useState(0);
@@ -25,79 +31,93 @@ export function Onboarding() {
 		setHasSeenOnboarding({ value: true });
 	};
 
-	const getStepTitle = () => {
-		switch (step) {
-			case 0:
-				return "Welcome to OpenCut Beta! 🎉";
-			case 1:
-				return "⚠️ This is a super early beta!";
-			case 2:
-				return "🦋 Have fun testing!";
-			default:
-				return "OpenCut Onboarding";
-		}
-	};
+	const stepConfig = [
+		{
+			title: "Welcome to OpenCut",
+			body: (
+				<>
+					<Description description="OpenCut is a free, open-source video editor that runs entirely in your browser. Your media never leaves your device." />
+					<Description description="Three things to know before you start:" />
+				</>
+			),
+			cta: "Show me",
+		},
+		{
+			title: "Bring your media in",
+			body: (
+				<>
+					<Description description="Add a clip in any of these ways:" />
+					<ul className="text-muted-foreground list-disc pl-5 space-y-1 text-sm">
+						<li>Click the blue Import button in the Media panel.</li>
+						<li>Drag files from your desktop onto the editor.</li>
+						<li>Paste media (Cmd/Ctrl+V) anywhere in the editor.</li>
+					</ul>
+				</>
+			),
+			cta: "Next",
+		},
+		{
+			title: "Edit, then export",
+			body: (
+				<>
+					<Description description="Drag clips onto the timeline at the bottom. Use Space to play, S to split, Delete to remove." />
+					<Description description="When you're ready, click the Export button in the top right." />
+					<Description
+						description={`This is a beta — found a bug? Tell us on [Discord](${SOCIAL_LINKS.discord}).`}
+					/>
+				</>
+			),
+			cta: "Get started",
+		},
+	] as const;
 
-	const renderStepContent = () => {
-		switch (step) {
-			case 0:
-				return (
-					<div className="space-y-5">
-						<div className="space-y-3">
-							<Title title="Welcome to OpenCut Beta! 🎉" />
-							<Description description="You're among the first to try OpenCut - the fully open source CapCut alternative." />
-						</div>
-						<NextButton onClick={handleNext}>Next</NextButton>
-					</div>
-				);
-			case 1:
-				return (
-					<div className="space-y-5">
-						<div className="space-y-3">
-							<Title title={getStepTitle()} />
-							<Description description="There's still a ton of things to do to make this editor amazing." />
-							<Description description="A lot of features are still missing. We're working hard to build them out!" />
-							<Description description="If you're curious, check out our roadmap [here](https://opencut.app/roadmap)" />
-						</div>
-						<NextButton onClick={handleNext}>Next</NextButton>
-					</div>
-				);
-			case 2:
-				return (
-					<div className="space-y-5">
-						<div className="space-y-3">
-							<Title title={getStepTitle()} />
-							<Description
-								description={`Join our [Discord](${SOCIAL_LINKS.discord}), chat with cool people and share feedback to help make OpenCut the best editor ever.`}
-							/>
-						</div>
-						<NextButton onClick={handleClose}>Finish</NextButton>
-					</div>
-				);
-			default:
-				return null;
-		}
-	};
+	const current = stepConfig[step] ?? stepConfig[0];
+	const isLast = step >= stepConfig.length - 1;
 
 	return (
 		<Dialog open={isOpen} onOpenChange={handleClose}>
-			<DialogContent className="sm:max-w-[425px]">
-				<DialogTitle>
-					<span className="sr-only">{getStepTitle()}</span>
-				</DialogTitle>
-				<DialogBody>{renderStepContent()}</DialogBody>
+			<DialogContent className="sm:max-w-[440px]">
+				<DialogBody>
+					<div className="space-y-5">
+						<div className="space-y-3">
+							<DialogTitle className="text-lg font-bold md:text-xl">
+								{current.title}
+							</DialogTitle>
+							<DialogDescription asChild>
+								<div className="text-muted-foreground space-y-2">
+									{current.body}
+								</div>
+							</DialogDescription>
+						</div>
+						<div className="flex flex-col gap-2">
+							<Button
+								onClick={isLast ? handleClose : handleNext}
+								variant="default"
+								className="w-full"
+							>
+								{current.cta}
+								<ArrowRightIcon className="size-4" />
+							</Button>
+							{!isLast ? (
+								<button
+									type="button"
+									onClick={handleClose}
+									className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
+								>
+									Skip tour
+								</button>
+							) : null}
+						</div>
+					</div>
+				</DialogBody>
 			</DialogContent>
 		</Dialog>
 	);
 }
 
-function Title({ title }: { title: string }) {
-	return <h2 className="text-lg font-bold md:text-xl">{title}</h2>;
-}
-
 function Description({ description }: { description: string }) {
 	return (
-		<div className="text-muted-foreground">
+		<div className="text-muted-foreground text-sm leading-relaxed">
 			<ReactMarkdown
 				components={{
 					p: ({ children }) => <p className="mb-0">{children}</p>,
@@ -116,20 +136,5 @@ function Description({ description }: { description: string }) {
 				{description}
 			</ReactMarkdown>
 		</div>
-	);
-}
-
-function NextButton({
-	children,
-	onClick,
-}: {
-	children: React.ReactNode;
-	onClick: () => void;
-}) {
-	return (
-		<Button onClick={onClick} variant="default" className="w-full">
-			{children}
-			<ArrowRightIcon className="size-4" />
-		</Button>
 	);
 }
