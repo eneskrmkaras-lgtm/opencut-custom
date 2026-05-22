@@ -17,11 +17,12 @@ import { MigrationDialog } from "@/project/components/migration-dialog";
 import { usePanelStore } from "@/editor/panel-store";
 import { usePasteMedia } from "@/media/use-paste-media";
 import { MobileGate } from "@/components/editor/mobile-gate";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useEditor } from "@/editor/use-editor";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
+import { useLocalStorage } from "@/services/storage/use-local-storage";
 import { ChangelogNotification } from "@/changelog/components/changelog-notification";
 import {
 	createPreviewOverlayControl,
@@ -59,18 +60,27 @@ export default function Editor() {
 
 function DegradedRendererBanner() {
 	const isDegraded = useEditor((e) => e.renderer.isDegraded);
-	const [dismissed, setDismissed] = useState(false);
+	const [dismissed, setDismissed] = useLocalStorage({
+		key: "degraded-renderer-banner-dismissed",
+		defaultValue: false,
+	});
 	if (!isDegraded || dismissed) return null;
 
 	return (
-		<div className="bg-accent border-b h-9 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-			<span>For the best experience, open OpenCut in Chrome.</span>
+		<div
+			role="status"
+			className="bg-accent border-b h-9 flex items-center justify-center gap-2 text-xs text-muted-foreground"
+		>
+			<span>
+				OpenCut works best on Chromium-based browsers (Chrome, Edge, Arc, Brave,
+				Opera). Some features may be limited here.
+			</span>
 			<Button
 				variant="text"
 				size="icon"
 				className="p-0 w-auto [&_svg]:size-3.5"
-				onClick={() => setDismissed(true)}
-				aria-label="Dismiss"
+				onClick={() => setDismissed({ value: true })}
+				aria-label="Dismiss browser compatibility notice"
 			>
 				<HugeiconsIcon icon={Cancel01Icon} />
 			</Button>

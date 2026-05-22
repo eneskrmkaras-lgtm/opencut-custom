@@ -27,6 +27,17 @@ export const TAB_KEYS = [
 	"settings",
 ] as const;
 
+/**
+ * Tabs that are visible in the panel rail today.
+ *
+ * Phase 1: hide "transitions" and "adjustment" until they have real views.
+ * The keys remain in TAB_KEYS so any persisted activeTab pointing to a hidden
+ * key still resolves to a coherent EmptyState in `assets/index.tsx`.
+ */
+export const VISIBLE_TAB_KEYS = TAB_KEYS.filter(
+	(key) => key !== "transitions" && key !== "adjustment",
+);
+
 export type Tab = (typeof TAB_KEYS)[number];
 
 const createHugeiconsIcon =
