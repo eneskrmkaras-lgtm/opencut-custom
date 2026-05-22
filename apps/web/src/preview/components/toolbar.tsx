@@ -23,12 +23,11 @@ import {
 } from "@/components/ui/select";
 import { PREVIEW_ZOOM_PRESETS } from "@/preview/zoom";
 import { usePreviewViewport } from "./preview-viewport";
-import { GridPopover } from "./guide-popover";
-import { usePreviewStore } from "@/preview/preview-store";
 import {
 	Tooltip,
-	TooltipTrigger,
 	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { MediaTime } from "@/wasm";
 
@@ -38,30 +37,51 @@ export function PreviewToolbar({
 	onToggleFullscreen: () => void;
 }) {
 	return (
-		<div className="grid grid-cols-[1fr_auto_1fr] items-center pb-3 pt-5 px-5">
-			<TimecodeDisplay />
-			<PlayPauseButton />
-			<div className="justify-self-end flex items-center gap-2.5">
-				<ZoomSelect />
-				<Separator orientation="vertical" className="h-4" />
-				{/* v0.4.0 */}
-				{/* <GridPopover>
-					<Button
-						variant={activeGuideDefinition ? "secondary" : "text"}
-						size="icon"
-					>
-						{activeGuideDefinition ? (
-							activeGuideDefinition.renderTriggerIcon()
-						) : (
-							<HugeiconsIcon icon={GridTableIcon} />
-						)}
-					</Button>
-				</GridPopover> */}
-				<Button variant="text" onClick={onToggleFullscreen}>
+		<TooltipProvider delayDuration={200}>
+			<div className="grid grid-cols-[1fr_auto_1fr] items-center pb-3 pt-5 px-5">
+				<TimecodeDisplay />
+				<PlayPauseButton />
+				<div className="justify-self-end flex items-center gap-2.5">
+					<ZoomSelect />
+					<Separator orientation="vertical" className="h-4" />
+					{/* v0.4.0 */}
+					{/* <GridPopover>
+						<Button
+							variant={activeGuideDefinition ? "secondary" : "text"}
+							size="icon"
+						>
+							{activeGuideDefinition ? (
+								activeGuideDefinition.renderTriggerIcon()
+							) : (
+								<HugeiconsIcon icon={GridTableIcon} />
+							)}
+						</Button>
+					</GridPopover> */}
+					<FullscreenButton onToggleFullscreen={onToggleFullscreen} />
+				</div>
+			</div>
+		</TooltipProvider>
+	);
+}
+
+function FullscreenButton({
+	onToggleFullscreen,
+}: {
+	onToggleFullscreen: () => void;
+}) {
+	return (
+		<Tooltip delayDuration={200}>
+			<TooltipTrigger asChild>
+				<Button
+					variant="text"
+					onClick={onToggleFullscreen}
+					aria-label="Toggle fullscreen"
+				>
 					<HugeiconsIcon icon={FullScreenIcon} />
 				</Button>
-			</div>
-		</div>
+			</TooltipTrigger>
+			<TooltipContent>Toggle fullscreen</TooltipContent>
+		</Tooltip>
 	);
 }
 
@@ -83,24 +103,31 @@ function TimecodeDisplay() {
 	}, [editor.playback]);
 
 	return (
-		<div className="flex items-center">
-			<EditableTimecode
-				time={currentTime}
-				duration={totalDuration}
-				format="HH:MM:SS:FF"
-				fps={fps}
-				onTimeChange={({ time }) => editor.playback.seek({ time })}
-				className="text-center"
-			/>
-			<span className="text-muted-foreground px-2 font-mono text-xs">/</span>
-			<span className="text-muted-foreground font-mono text-xs">
-				{formatTimecode({
-					time: totalDuration,
-					format: "HH:MM:SS:FF",
-					rate: fps,
-				})}
-			</span>
-		</div>
+		<Tooltip delayDuration={400}>
+			<TooltipTrigger asChild>
+				<div className="flex w-fit items-center">
+					<EditableTimecode
+						time={currentTime}
+						duration={totalDuration}
+						format="HH:MM:SS:FF"
+						fps={fps}
+						onTimeChange={({ time }) => editor.playback.seek({ time })}
+						className="text-center"
+					/>
+					<span className="text-muted-foreground px-2 font-mono text-xs">/</span>
+					<span className="text-muted-foreground font-mono text-xs">
+						{formatTimecode({
+							time: totalDuration,
+							format: "HH:MM:SS:FF",
+							rate: fps,
+						})}
+					</span>
+				</div>
+			</TooltipTrigger>
+			<TooltipContent>
+				Current time / total duration. Click the left value to jump.
+			</TooltipContent>
+		</Tooltip>
 	);
 }
 
@@ -119,21 +146,28 @@ function ZoomSelect() {
 	};
 
 	return (
-		<Select
-			value={isAtFit ? "fit" : String(zoomPercent)}
-			onValueChange={onValueChange}
-		>
-			<SelectTrigger className="tabular-nums">{displayLabel}</SelectTrigger>
-			<SelectContent>
-				<SelectItem value="fit">Fit</SelectItem>
-				<SelectSeparator />
-				{PREVIEW_ZOOM_PRESETS.map((preset) => (
-					<SelectItem key={preset} value={String(preset)}>
-						{preset}%
-					</SelectItem>
-				))}
-			</SelectContent>
-		</Select>
+		<Tooltip delayDuration={200}>
+			<TooltipTrigger asChild>
+				<Select
+					value={isAtFit ? "fit" : String(zoomPercent)}
+					onValueChange={onValueChange}
+				>
+					<SelectTrigger className="tabular-nums" aria-label="Preview zoom">
+						{displayLabel}
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="fit">Fit</SelectItem>
+						<SelectSeparator />
+						{PREVIEW_ZOOM_PRESETS.map((preset) => (
+							<SelectItem key={preset} value={String(preset)}>
+								{preset}%
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</TooltipTrigger>
+			<TooltipContent>Preview zoom</TooltipContent>
+		</Tooltip>
 	);
 }
 
