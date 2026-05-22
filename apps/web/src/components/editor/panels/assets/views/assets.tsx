@@ -605,10 +605,12 @@ function MediaActions({
 				</Tooltip>
 			</TooltipProvider>
 			<Button
-				variant="outline"
+				variant="default"
 				onClick={onImport}
 				disabled={isProcessing}
 				size="sm"
+				aria-label="Import media (or drag a file into the editor, or paste with Cmd/Ctrl+V)"
+				title="Import media — also accepts drag & drop and paste"
 				className="items-center justify-center gap-1.5"
 			>
 				<HugeiconsIcon icon={CloudUploadIcon} />
