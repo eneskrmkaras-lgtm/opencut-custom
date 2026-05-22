@@ -84,6 +84,7 @@ import { useEditor } from "@/editor/use-editor";
 import { useScrollPosition } from "@/timeline/hooks/use-scroll-position";
 import { useTimelinePlayhead } from "@/timeline/hooks/use-timeline-playhead";
 import { DragLine } from "./drag-line";
+import { TimelineEmptyState } from "./timeline-empty-state";
 import { invokeAction } from "@/actions";
 import { resolveTimelineElementIntersections } from "./selection-hit-testing";
 import { cn } from "@/utils/ui";
@@ -561,6 +562,9 @@ export function Timeline() {
 										dropTarget={dropTarget}
 									/>
 								)}
+								{tracks.length > 0 && timelineDuration <= 0 && !isDragOver ? (
+									<TimelineEmptyState />
+								) : null}
 							</div>
 							<TimelineGutter
 								onMouseDown={(event) => {

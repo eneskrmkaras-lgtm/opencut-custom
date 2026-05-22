@@ -33,7 +33,13 @@ import {
 	SectionTitle,
 } from "@/components/section";
 import { useEditor } from "@/editor/use-editor";
-import { DEFAULT_EXPORT_OPTIONS } from "@/export/defaults";
+import { useExportPreferencesStore } from "@/export/preferences-store";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 function isExportFormat(value: string): value is ExportFormat {
 	return EXPORT_FORMAT_VALUES.some((formatValue) => formatValue === value);
@@ -57,30 +63,44 @@ export function ExportButton() {
 		setIsExportPopoverOpen(open);
 	};
 
+	const triggerLabel = hasProject
+		? "Export project"
+		: "Open a project to export";
+
 	return (
 		<Popover
 			open={isExportPopoverOpen}
 			onOpenChange={(open) => handlePopoverOpenChange({ open })}
 		>
-			<PopoverTrigger asChild>
-				<Button
-					type="button"
-					size="sm"
-					disabled={!hasProject}
-					aria-label={hasProject ? "Export project" : "Export (no project loaded)"}
-					title={hasProject ? "Export project" : "Open a project to export"}
-					onClick={hasProject ? () => setIsExportPopoverOpen(true) : undefined}
-					className={cn(
-						"h-8 gap-1.5 px-3.5 font-medium",
-						"bg-accent-action text-accent-action-foreground",
-						"hover:bg-accent-action-hover hover:text-accent-action-foreground",
-						"shadow-sm focus-visible:ring-accent-action/60",
-					)}
-				>
-					<Download className="size-3.5" />
-					<span>Export</span>
-				</Button>
-			</PopoverTrigger>
+			<TooltipProvider delayDuration={300}>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<span className="inline-flex">
+							<PopoverTrigger asChild>
+								<Button
+									type="button"
+									size="sm"
+									disabled={!hasProject}
+									aria-label={triggerLabel}
+									onClick={
+										hasProject ? () => setIsExportPopoverOpen(true) : undefined
+									}
+									className={cn(
+										"h-8 gap-1.5 px-3.5 font-medium",
+										"bg-accent-action text-accent-action-foreground",
+										"hover:bg-accent-action-hover hover:text-accent-action-foreground",
+										"shadow-sm focus-visible:ring-accent-action/60",
+									)}
+								>
+									<Download className="size-3.5" />
+									<span>Export</span>
+								</Button>
+							</PopoverTrigger>
+						</span>
+					</TooltipTrigger>
+					<TooltipContent>{triggerLabel}</TooltipContent>
+				</Tooltip>
+			</TooltipProvider>
 			{hasProject && <ExportPopover onOpenChange={setIsExportPopoverOpen} />}
 		</Popover>
 	);
@@ -95,15 +115,12 @@ function ExportPopover({
 	const activeProject = useEditor((e) => e.project.getActive());
 	const exportState = useEditor((e) => e.project.getExportState());
 	const { isExporting, progress, result: exportResult } = exportState;
-	const [format, setFormat] = useState<ExportFormat>(
-		DEFAULT_EXPORT_OPTIONS.format,
-	);
-	const [quality, setQuality] = useState<ExportQuality>(
-		DEFAULT_EXPORT_OPTIONS.quality,
-	);
-	const [shouldIncludeAudio, setShouldIncludeAudio] = useState<boolean>(
-		DEFAULT_EXPORT_OPTIONS.includeAudio ?? true,
-	);
+	const format = useExportPreferencesStore((s) => s.format);
+	const quality = useExportPreferencesStore((s) => s.quality);
+	const shouldIncludeAudio = useExportPreferencesStore((s) => s.includeAudio);
+	const setFormat = useExportPreferencesStore((s) => s.setFormat);
+	const setQuality = useExportPreferencesStore((s) => s.setQuality);
+	const setIncludeAudio = useExportPreferencesStore((s) => s.setIncludeAudio);
 
 	const handleExport = async () => {
 		if (!activeProject) return;
@@ -159,7 +176,7 @@ function ExportPopover({
 								<div className="flex flex-col">
 									<Section
 										collapsible
-										defaultOpen={false}
+										defaultOpen={true}
 										showTopBorder={false}
 									>
 										<SectionHeader>
@@ -170,7 +187,7 @@ function ExportPopover({
 												value={format}
 												onValueChange={(value) => {
 													if (isExportFormat(value)) {
-														setFormat(value);
+														setFormat({ format: value });
 													}
 												}}
 											>
@@ -190,7 +207,7 @@ function ExportPopover({
 										</SectionContent>
 									</Section>
 
-									<Section collapsible defaultOpen={false}>
+									<Section collapsible defaultOpen={true}>
 										<SectionHeader>
 											<SectionTitle>Quality</SectionTitle>
 										</SectionHeader>
@@ -199,7 +216,7 @@ function ExportPopover({
 												value={quality}
 												onValueChange={(value) => {
 													if (isExportQuality(value)) {
-														setQuality(value);
+														setQuality({ quality: value });
 													}
 												}}
 											>
@@ -225,7 +242,7 @@ function ExportPopover({
 										</SectionContent>
 									</Section>
 
-									<Section collapsible defaultOpen={false}>
+									<Section collapsible defaultOpen={true}>
 										<SectionHeader>
 											<SectionTitle>Audio</SectionTitle>
 										</SectionHeader>
@@ -235,7 +252,7 @@ function ExportPopover({
 													id="include-audio"
 													checked={shouldIncludeAudio}
 													onCheckedChange={(checked) =>
-														setShouldIncludeAudio(!!checked)
+														setIncludeAudio({ includeAudio: !!checked })
 													}
 												/>
 												<Label htmlFor="include-audio">
@@ -252,7 +269,8 @@ function ExportPopover({
 										Export
 									</Button>
 									<p className="text-muted-foreground text-xs text-center">
-										Closing this menu cancels the export.
+										We&apos;ll remember these settings. Closing this menu
+										cancels an in-progress export.
 									</p>
 								</div>
 							</>
@@ -307,7 +325,15 @@ function ExportError({
 				icon={AlertCircleIcon}
 				variant="error"
 				title="Export failed"
-				description={error}
+				description={
+					<>
+						<span className="block">{error}</span>
+						<span className="text-muted-foreground mt-2 block text-xs">
+							If this keeps happening, try a different format or quality, or
+							copy the error to share.
+						</span>
+					</>
+				}
 				action={
 					<>
 						<Button
