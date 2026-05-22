@@ -14,6 +14,8 @@ import { usePropertiesStore } from "./stores/properties-store";
 import { getPropertiesConfig } from "./registry";
 import { cn } from "@/utils/ui";
 import { EmptyView } from "./empty-view";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CheckListIcon } from "@hugeicons/core-free-icons";
 
 export function PropertiesPanel() {
 	const editor = useEditor();
@@ -33,9 +35,11 @@ export function PropertiesPanel() {
 	if (selectedElements.length > 1) {
 		return (
 			<div className="panel bg-background flex h-full flex-col items-center justify-center overflow-hidden rounded-sm border">
-				<p className="text-muted-foreground text-sm">
-					{selectedElements.length} elements selected.0
-				</p>
+				<EmptyState
+					icon={CheckListIcon}
+					title={`${selectedElements.length} elements selected`}
+					description="Editing many at once is coming soon. Select a single element to edit its properties."
+				/>
 			</div>
 		);
 	}
