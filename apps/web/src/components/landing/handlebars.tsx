@@ -144,7 +144,10 @@ export function Handlebars({ children }: HandlebarsProps) {
 				className="relative mt-0.5"
 				style={{ transform: `rotate(-${HANDLEBARS_ROTATE_DEG}deg)` }}
 			>
-				<div className="absolute inset-0 z-10 flex size-full justify-between rounded-2xl border border-yellow-500">
+				<div
+					aria-hidden="true"
+					className="absolute inset-0 z-10 flex size-full justify-between rounded-2xl border border-yellow-500 motion-reduce:opacity-60"
+				>
 					<div
 						ref={leftHandleRef}
 						className="bg-background absolute left-0 z-20 flex h-full w-7 cursor-ew-resize touch-none items-center justify-center rounded-full border border-yellow-500 select-none"
