@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { RenameProjectDialog } from "@/project/components/rename-project-dialog";
 import { DeleteProjectDialog } from "@/project/components/delete-project-dialog";
+import { ProjectInfoDialog } from "@/project/components/project-info-dialog";
 import { useRouter } from "next/navigation";
 import { FaDiscord } from "react-icons/fa6";
 import { ExportButton } from "./export-button";
@@ -21,18 +22,26 @@ import { DEFAULT_LOGO_URL } from "@/site/brand";
 import { SOCIAL_LINKS } from "@/site/social";
 import { toast } from "sonner";
 import { useEditor } from "@/editor/use-editor";
-import { CommandIcon, Logout05Icon } from "@hugeicons/core-free-icons";
+import {
+	CommandIcon,
+	Delete02Icon,
+	Edit03Icon,
+	InformationCircleIcon,
+	Logout05Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ShortcutsDialog } from "@/actions/components/shortcuts-dialog";
 import Image from "next/image";
 import { cn } from "@/utils/ui";
+import { SaveIndicator } from "./save-indicator";
 
 export function EditorHeader() {
 	return (
-		<header className="bg-background flex h-[3.4rem] items-center justify-between px-3 pt-0.5">
-			<div className="flex items-center gap-1">
+		<header className="bg-background flex h-[3.4rem] items-center justify-between gap-2 px-3 pt-0.5">
+			<div className="flex min-w-0 items-center gap-1">
 				<ProjectDropdown />
 				<EditableProjectName />
+				<SaveIndicator />
 			</div>
 			<nav className="flex items-center gap-2">
 				<FeedbackPopover />
@@ -45,7 +54,7 @@ export function EditorHeader() {
 
 function ProjectDropdown() {
 	const [openDialog, setOpenDialog] = useState<
-		"delete" | "rename" | "shortcuts" | null
+		"delete" | "rename" | "shortcuts" | "info" | null
 	>(null);
 	const [isExiting, setIsExiting] = useState(false);
 	const router = useRouter();
@@ -111,17 +120,45 @@ function ProjectDropdown() {
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="icon" className="p-1 rounded-sm size-8">
+					<Button
+						variant="ghost"
+						size="icon"
+						className="p-1 rounded-sm size-8"
+						aria-label="Project menu"
+					>
 						<Image
 							src={DEFAULT_LOGO_URL}
-							alt="Project thumbnail"
+							alt=""
 							width={32}
 							height={32}
 							className="invert dark:invert-0 size-5"
 						/>
 					</Button>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent align="start" className="z-100 w-44">
+				<DropdownMenuContent align="start" className="z-100 w-48">
+					<DropdownMenuItem
+						onClick={() => setOpenDialog("rename")}
+						icon={<HugeiconsIcon icon={Edit03Icon} />}
+					>
+						Rename project
+					</DropdownMenuItem>
+
+					<DropdownMenuItem
+						onClick={() => setOpenDialog("info")}
+						icon={<HugeiconsIcon icon={InformationCircleIcon} />}
+					>
+						Project info
+					</DropdownMenuItem>
+
+					<DropdownMenuItem
+						onClick={() => setOpenDialog("shortcuts")}
+						icon={<HugeiconsIcon icon={CommandIcon} />}
+					>
+						Keyboard shortcuts
+					</DropdownMenuItem>
+
+					<DropdownMenuSeparator />
+
 					<DropdownMenuItem
 						onClick={handleExit}
 						disabled={isExiting}
@@ -131,10 +168,11 @@ function ProjectDropdown() {
 					</DropdownMenuItem>
 
 					<DropdownMenuItem
-						onClick={() => setOpenDialog("shortcuts")}
-						icon={<HugeiconsIcon icon={CommandIcon} />}
+						variant="destructive"
+						onClick={() => setOpenDialog("delete")}
+						icon={<HugeiconsIcon icon={Delete02Icon} />}
 					>
-						Shortcuts
+						Delete project
 					</DropdownMenuItem>
 
 					<DropdownMenuSeparator />
@@ -166,6 +204,13 @@ function ProjectDropdown() {
 				isOpen={openDialog === "shortcuts"}
 				onOpenChange={(isOpen) => setOpenDialog(isOpen ? "shortcuts" : null)}
 			/>
+			{activeProject ? (
+				<ProjectInfoDialog
+					isOpen={openDialog === "info"}
+					onOpenChange={(isOpen) => setOpenDialog(isOpen ? "info" : null)}
+					project={activeProject.metadata}
+				/>
+			) : null}
 		</>
 	);
 }
@@ -238,9 +283,11 @@ function EditableProjectName() {
 			onClick={startEditing}
 			onBlur={saveEdit}
 			onKeyDown={handleKeyDown}
+			aria-label="Project name"
+			title={projectName}
 			style={{ fieldSizing: "content" }}
 			className={cn(
-				"text-[0.9rem] h-8 px-2 py-1 rounded-sm bg-transparent outline-none cursor-pointer hover:bg-accent hover:text-accent-foreground",
+				"text-[0.9rem] h-8 px-2 py-1 rounded-sm bg-transparent outline-none cursor-pointer hover:bg-accent hover:text-accent-foreground min-w-0 max-w-[18ch] sm:max-w-[28ch] truncate",
 				isEditing && "ring-1 ring-ring cursor-text hover:bg-transparent",
 			)}
 		/>
