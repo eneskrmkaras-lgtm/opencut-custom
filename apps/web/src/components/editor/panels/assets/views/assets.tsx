@@ -109,6 +109,15 @@ export function MediaView() {
 			});
 		} catch (error) {
 			console.error("Error processing files:", error);
+			toast.error(
+				files.length > 1 ? "Couldn't import some files" : "Couldn't import",
+				{
+					description:
+						error instanceof Error
+							? error.message
+							: "An unexpected error occurred. Please try a different file or check the console.",
+				},
+			);
 		} finally {
 			setIsProcessing(false);
 			setProgress(0);
@@ -213,6 +222,7 @@ export function MediaView() {
 						isVisible={true}
 						isProcessing={isProcessing}
 						progress={progress}
+						isDragging={isDragOver}
 						onClick={openFilePicker}
 					/>
 				) : (
