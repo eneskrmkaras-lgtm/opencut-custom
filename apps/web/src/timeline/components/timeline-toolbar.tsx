@@ -86,6 +86,24 @@ export function TimelineToolbar({
 	);
 }
 
+function SelectionPill() {
+	const { selectedElements } = useElementSelection();
+	if (selectedElements.length === 0) return null;
+	const label =
+		selectedElements.length === 1
+			? "1 clip selected"
+			: `${selectedElements.length} clips selected`;
+	return (
+		<div
+			role="status"
+			aria-live="polite"
+			className="bg-secondary text-secondary-foreground border border-secondary-border ml-1 mr-1 hidden h-6 select-none items-center rounded-sm px-2 text-xs sm:inline-flex"
+		>
+			{label}
+		</div>
+	);
+}
+
 function ToolbarLeftSection() {
 	const editor = useEditor();
 	const mediaAssets = useEditor((currentEditor) =>
@@ -146,21 +164,24 @@ function ToolbarLeftSection() {
 				<ToolbarButton
 					action="split"
 					icon={<HugeiconsIcon icon={ScissorIcon} />}
-					tooltip="Split element"
+					tooltip="Split clip"
+					description="Cut the selected clip at the playhead."
 					onClick={({ event }) => handleAction({ action: "split", event })}
 				/>
 
 				<ToolbarButton
 					action="split-left"
 					icon={<HugeiconsIcon icon={AlignLeftIcon} />}
-					tooltip="Split left"
+					tooltip="Trim left"
+					description="Remove everything left of the playhead on the selected clip."
 					onClick={({ event }) => handleAction({ action: "split-left", event })}
 				/>
 
 				<ToolbarButton
 					action="split-right"
 					icon={<HugeiconsIcon icon={AlignRightIcon} />}
-					tooltip="Split right"
+					tooltip="Trim right"
+					description="Remove everything right of the playhead on the selected clip."
 					onClick={({ event }) =>
 						handleAction({ action: "split-right", event })
 					}
@@ -174,7 +195,13 @@ function ToolbarLeftSection() {
 						/>
 					}
 					tooltip={sourceAudioLabel}
+					description={
+						isSelectedSourceAudioSeparated
+							? "Re-attach the audio track to the video clip."
+							: "Move the video's audio to its own track so you can edit it separately."
+					}
 					disabled={!canToggleSelectedSourceAudio}
+					disabledReason="Select a video clip with audio first."
 					onClick={({ event }) =>
 						handleAction({ action: "toggle-source-audio", event })
 					}
@@ -183,7 +210,8 @@ function ToolbarLeftSection() {
 				<ToolbarButton
 					action="duplicate-selected"
 					icon={<HugeiconsIcon icon={Copy01Icon} />}
-					tooltip="Duplicate element"
+					tooltip="Duplicate clip"
+					description="Make a copy of the selected clip on the same track."
 					onClick={({ event }) =>
 						handleAction({ action: "duplicate-selected", event })
 					}
@@ -191,19 +219,24 @@ function ToolbarLeftSection() {
 
 				<ToolbarButton
 					icon={<HugeiconsIcon icon={SnowIcon} />}
-					tooltip="Freeze frame (coming soon)"
+					tooltip="Freeze frame"
+					description="Insert a still frame at the playhead. Coming soon."
 					disabled={true}
+					disabledReason="Coming soon."
 					onClick={({ event: _event }) => {}}
 				/>
 
 				<ToolbarButton
 					action="delete-selected"
 					icon={<HugeiconsIcon icon={Delete02Icon} />}
-					tooltip="Delete element"
+					tooltip="Delete clip"
+					description="Remove the selected clip from the timeline."
 					onClick={({ event }) =>
 						handleAction({ action: "delete-selected", event })
 					}
 				/>
+
+				<SelectionPill />
 
 				<div className="bg-border mx-1 h-6 w-px" />
 
@@ -212,6 +245,7 @@ function ToolbarLeftSection() {
 					icon={<HugeiconsIcon icon={Bookmark02Icon} />}
 					isActive={isCurrentlyBookmarked}
 					tooltip={isCurrentlyBookmarked ? "Remove bookmark" : "Add bookmark"}
+					description="Mark this moment so you can jump back to it later."
 					onClick={({ event }) =>
 						handleAction({ action: "toggle-bookmark", event })
 					}
@@ -236,7 +270,9 @@ function ToolbarLeftSection() {
 					<ToolbarButton
 						icon={<HugeiconsIcon icon={Chart03Icon} />}
 						tooltip={graphEditor.tooltip}
+						description="Adjust the easing curve for the selected keyframe."
 						disabled={!graphEditor.canOpen}
+						disabledReason="Select a keyframe to edit its curve."
 						buttonWrapper={(button) =>
 							graphEditor.canOpen ? (
 								<PopoverTrigger asChild>{button}</PopoverTrigger>
@@ -293,7 +329,8 @@ function ToolbarRightSection({
 					action="toggle-snapping"
 					icon={<HugeiconsIcon icon={MagnetIcon} />}
 					isActive={snappingEnabled}
-					tooltip="Auto snapping"
+					tooltip="Snapping"
+					description="Snap clips to the playhead, ruler ticks, and neighbours."
 					onClick={() => toggleSnapping()}
 				/>
 
@@ -302,38 +339,54 @@ function ToolbarRightSection({
 					icon={<OcRippleIcon size={24} className="scale-110" />}
 					isActive={rippleEditingEnabled}
 					tooltip="Ripple editing"
+					description="When you remove a clip, the rest of the timeline closes the gap automatically."
 					onClick={() => toggleRippleEditing()}
 				/>
 			</TooltipProvider>
 
 			<div className="bg-border mx-1 h-6 w-px" />
 
-			<div className="flex items-center gap-1">
-				<Button
-					variant="text"
-					size="icon"
-					onClick={() => onZoom({ direction: "out" })}
-				>
-					<HugeiconsIcon icon={SearchMinusIcon} />
-				</Button>
-				<Slider
-					className="w-28"
-					value={[zoomToSlider({ zoomLevel, minZoom })]}
-					onValueChange={(values) =>
-						onZoomChange(sliderToZoom({ sliderPosition: values[0], minZoom }))
-					}
-					min={0}
-					max={1}
-					step={0.005}
-				/>
-				<Button
-					variant="text"
-					size="icon"
-					onClick={() => onZoom({ direction: "in" })}
-				>
-					<HugeiconsIcon icon={SearchAddIcon} />
-				</Button>
-			</div>
+			<TooltipProvider delayDuration={500}>
+				<div className="flex items-center gap-1">
+					<Tooltip delayDuration={200}>
+						<TooltipTrigger asChild>
+							<Button
+								variant="text"
+								size="icon"
+								onClick={() => onZoom({ direction: "out" })}
+								aria-label="Zoom out"
+							>
+								<HugeiconsIcon icon={SearchMinusIcon} />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>Zoom out</TooltipContent>
+					</Tooltip>
+					<Slider
+						className="w-28"
+						value={[zoomToSlider({ zoomLevel, minZoom })]}
+						onValueChange={(values) =>
+							onZoomChange(sliderToZoom({ sliderPosition: values[0], minZoom }))
+						}
+						min={0}
+						max={1}
+						step={0.005}
+						aria-label="Timeline zoom"
+					/>
+					<Tooltip delayDuration={200}>
+						<TooltipTrigger asChild>
+							<Button
+								variant="text"
+								size="icon"
+								onClick={() => onZoom({ direction: "in" })}
+								aria-label="Zoom in"
+							>
+								<HugeiconsIcon icon={SearchAddIcon} />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>Zoom in</TooltipContent>
+					</Tooltip>
+				</div>
+			</TooltipProvider>
 		</div>
 	);
 }
@@ -341,16 +394,20 @@ function ToolbarRightSection({
 function ToolbarButton({
 	icon,
 	tooltip,
+	description,
 	onClick,
 	disabled,
+	disabledReason,
 	isActive,
 	buttonWrapper,
 	action,
 }: {
 	icon: React.ReactNode;
 	tooltip: string;
+	description?: string;
 	onClick?: ({ event }: { event: React.MouseEvent }) => void;
 	disabled?: boolean;
+	disabledReason?: string;
 	isActive?: boolean;
 	buttonWrapper?: (button: React.ReactElement) => React.ReactElement;
 	action?: TActionWithOptionalArgs;
@@ -360,9 +417,13 @@ function ToolbarButton({
 		? shortcuts.find((s) => s.action === action)
 		: null;
 
-	const tooltipContent = shortcut
-		? `${tooltip} (${shortcut.keys.join(" or ")})`
-		: tooltip;
+	const headline =
+		shortcut && !disabled
+			? `${tooltip} (${shortcut.keys.join(" or ")})`
+			: tooltip;
+	const subline = disabled
+		? (disabledReason ?? description)
+		: description;
 
 	const button = (
 		<Button
@@ -370,6 +431,7 @@ function ToolbarButton({
 			size="icon"
 			disabled={disabled}
 			onClick={onClick ? (event) => onClick({ event }) : undefined}
+			aria-label={tooltip}
 			className={cn(
 				"rounded-sm",
 				disabled ? "cursor-not-allowed opacity-50" : "",
@@ -389,7 +451,14 @@ function ToolbarButton({
 	return (
 		<Tooltip delayDuration={200}>
 			<TooltipTrigger asChild>{trigger}</TooltipTrigger>
-			<TooltipContent>{tooltipContent}</TooltipContent>
+			<TooltipContent className="max-w-[15rem]">
+				<div className="font-medium leading-snug">{headline}</div>
+				{subline ? (
+					<div className="text-popover-foreground/70 mt-0.5 text-xs leading-snug">
+						{subline}
+					</div>
+				) : null}
+			</TooltipContent>
 		</Tooltip>
 	);
 }
