@@ -677,6 +677,7 @@ function TrackLabelsPanel({
 														on: VolumeHighIcon,
 														off: VolumeOffIcon,
 													}}
+													label={track.muted ? "Unmute track" : "Mute track"}
 													onClick={() =>
 														editor.timeline.toggleTrackMute({
 															trackId: track.id,
@@ -691,6 +692,7 @@ function TrackLabelsPanel({
 														on: ViewIcon,
 														off: ViewOffSlashIcon,
 													}}
+													label={track.hidden ? "Show track" : "Hide track"}
 													onClick={() =>
 														editor.timeline.toggleTrackVisibility({
 															trackId: track.id,
@@ -907,6 +909,7 @@ function TrackToggleIcon({
 	isOff,
 	icons,
 	onClick,
+	label,
 }: {
 	isOff: boolean;
 	icons: {
@@ -914,23 +917,24 @@ function TrackToggleIcon({
 		off: IconSvgElement;
 	};
 	onClick: () => void;
+	label: string;
 }) {
+	const Icon = isOff ? icons.off : icons.on;
 	return (
-		<>
-			{isOff ? (
-				<HugeiconsIcon
-					icon={icons.off}
-					className="text-destructive size-4 cursor-pointer"
-					onClick={onClick}
-				/>
-			) : (
-				<HugeiconsIcon
-					icon={icons.on}
-					className="text-muted-foreground size-4 cursor-pointer"
-					onClick={onClick}
-				/>
+		<button
+			type="button"
+			onClick={onClick}
+			aria-label={label}
+			aria-pressed={isOff}
+			className={cn(
+				"inline-flex size-5 items-center justify-center rounded-sm transition-colors",
+				"hover:bg-accent focus-visible:bg-accent",
+				"focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+				isOff ? "text-destructive" : "text-muted-foreground",
 			)}
-		</>
+		>
+			<HugeiconsIcon icon={Icon} className="size-4" aria-hidden="true" />
+		</button>
 	);
 }
 
